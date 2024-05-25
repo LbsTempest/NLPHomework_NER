@@ -21,6 +21,8 @@ def train_encoder_model(model, train_dataloader, dev_dataloader, criterion, opti
             optimizer.step()
             if i % 100 == 0:
                 print(f"Batch {i}/{len(train_dataloader)} Loss: {loss.item()}")
+            with open("decoder_loss.txt", "a") as f:
+                f.write(f"Epoch {epoch+1}/{num_epochs}, Batch {i}/{len(train_dataloader)}, Loss: {loss.item()}\n")
 
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}")
         accuracy: float = evaluate_model(model, dev_dataloader, device)
@@ -49,10 +51,10 @@ def train_decoder_model(model, train_dataloader, dev_dataloader, criterion, opti
             optimizer.step()
             if i % 100 == 0:
                 print(f"Batch {i}/{len(train_dataloader)} Loss: {loss.item()}")
+            with open("decoder_loss.txt", "a") as f:
+                f.write(f"Epoch {epoch+1}/{num_epochs}, Batch {i}/{len(train_dataloader)}, Loss: {loss.item()}\n")
 
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}")
-        with open("decoder_loss.txt", "a") as f:
-            f.write(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}\n")
         accuracy: float = evaluate_model(model, dev_dataloader, device)
         if accuracy > model_accuracy:
             model_accuracy = accuracy
