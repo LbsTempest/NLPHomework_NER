@@ -21,7 +21,7 @@ def train_encoder_model(model, train_dataloader, dev_dataloader, criterion, opti
             optimizer.step()
             if i % 100 == 0:
                 print(f"Batch {i}/{len(train_dataloader)} Loss: {loss.item()}")
-            with open("decoder_loss.txt", "a") as f:
+            with open("encoder_loss.txt", "a") as f:
                 f.write(f"Epoch {epoch+1}/{num_epochs}, Batch {i}/{len(train_dataloader)}, Loss: {loss.item()}\n")
 
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}")
@@ -30,7 +30,7 @@ def train_encoder_model(model, train_dataloader, dev_dataloader, criterion, opti
             model_accuracy = accuracy
             torch.save(model.state_dict(), "best_model.pth")
         print(f"Best Accuracy: {model_accuracy:.4f}")
-        with open("decoder_loss.txt", "a") as f:
+        with open("encoder_loss.txt", "a") as f:
             f.write(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}\n")
             f.write(f"Best Accuracy: {model_accuracy:.4f}\n")
 
@@ -74,8 +74,9 @@ def evaluate_model(model, data_loader, device) -> float:
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
         labels = batch["labels"].to(device)
+        segment_embedding = batch["segment_embedding"].to(device)
 
-        outputs = model(input_ids, attention_mask)
+        outputs = model(input_ids, segment_embedding, attention_mask)
 
         _, predicted = torch.max(outputs, dim=2)
         predicted = predicted[attention_mask.bool().squeeze(1).squeeze(1)].cpu().numpy()
