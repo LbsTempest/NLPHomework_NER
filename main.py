@@ -34,7 +34,7 @@ def main(args) -> None:
         model.load_state_dict(torch.load(args.model_path))
     
     # train model
-    trainer = Trainer(model, train_dataloader, dev_dataloader, test_dataloader, num_epochs=args.num_epochs, lr=args.lr, device=args.device)
+    trainer = Trainer(model, args.model_type, train_dataloader, dev_dataloader, test_dataloader, num_epochs=args.num_epochs, lr=args.lr, device=args.device)
     trainer.run()
 
 

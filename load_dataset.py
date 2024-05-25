@@ -85,7 +85,6 @@ def get_train_dev_dataloader(dataset_path: str, model_type: str, max_len: int = 
     label2id = {label: idx for idx, label in enumerate(unique_labels)}
     # id2label = {idx: label for label, idx in label2id.items()}
 
-
     vocab = {"<PAD>": 0, "<UNK>": 1}
     for text in train_texts:
         for token in text:
@@ -95,6 +94,9 @@ def get_train_dev_dataloader(dataset_path: str, model_type: str, max_len: int = 
     print(f"Vocab size: {len(vocab)}")
 
     if model_type == "encoder_only":
+        train_dataset = BertNERDataset(train_texts, labels, vocab, max_len, label2id)
+        dev_dataset = BertNERDataset(dev_texts, labels, vocab, max_len, label2id)
+    elif model_type == "decoder_only":
         train_dataset = BertNERDataset(train_texts, labels, vocab, max_len, label2id)
         dev_dataset = BertNERDataset(dev_texts, labels, vocab, max_len, label2id)
 
