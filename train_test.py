@@ -51,11 +51,15 @@ def train_decoder_model(model, train_dataloader, dev_dataloader, criterion, opti
                 print(f"Batch {i}/{len(train_dataloader)} Loss: {loss.item()}")
 
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}")
+        with open("decoder_loss.txt", "a") as f:
+            f.write(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}\n")
         accuracy: float = evaluate_model(model, dev_dataloader, device)
         if accuracy > model_accuracy:
             model_accuracy = accuracy
             torch.save(model.state_dict(), "best_model.pth")
     print(f"Best Accuracy: {model_accuracy:.4f}")
+    with open("decoder_loss.txt", "a") as f:
+        f.write(f"Best Accuracy: {model_accuracy:.4f}\n")
 
 def evaluate_model(model, data_loader, device) -> float:
     model.eval()
