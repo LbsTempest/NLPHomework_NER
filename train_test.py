@@ -89,6 +89,8 @@ def evaluate_model(model, data_loader, device) -> float:
     print(f"Accuracy: {accuracy:.4f}")
     model.train()
 
+    return accuracy
+
 
 class Trainer:
     def __init__(self, model, model_type, train_loader, dev_loader, test_loader, 
