@@ -29,7 +29,10 @@ def train_encoder_model(model, train_dataloader, dev_dataloader, criterion, opti
         if accuracy > model_accuracy:
             model_accuracy = accuracy
             torch.save(model.state_dict(), "best_model.pth")
-    print(f"Best Accuracy: {model_accuracy:.4f}")
+        print(f"Best Accuracy: {model_accuracy:.4f}")
+        with open("decoder_loss.txt", "a") as f:
+            f.write(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}\n")
+            f.write(f"Best Accuracy: {model_accuracy:.4f}\n")
 
 
 def train_decoder_model(model, train_dataloader, dev_dataloader, criterion, optimizer, num_epochs, device):
