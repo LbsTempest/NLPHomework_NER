@@ -72,7 +72,7 @@ def evaluate_model(model, data_loader, device) -> float:
     total = 0
     for i, batch in enumerate(data_loader):
         input_ids = batch["input_ids"].to(device)
-        attention_mask = batch["attention_mask"].to(device)
+        attention_mask = batch["attention_mask"].to(device).unsqueeze(1).unsqueeze(2)
         labels = batch["labels"].to(device)
         segment_embedding = batch["segment_embedding"].to(device)
 
