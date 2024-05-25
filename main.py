@@ -9,6 +9,7 @@ from train_test import Trainer
 
 
 def main(args) -> None:
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # load dataset
     train_dataloader, dev_dataloader, label2id, vocab = get_train_dev_dataloader(
         "./ner-data", args.model_type, args.max_len, args.batch_size)
@@ -27,14 +28,14 @@ def main(args) -> None:
                                     args.n_encoder_layers, args.n_decoder_layers, args.max_len, output_dim, args.dropout)
     else:
         raise ValueError("Invalid model type")
-    model.to(args.device)
+    model.to(device)
     
     # load model from path
     if args.model_path is not None:
         model.load_state_dict(torch.load(args.model_path))
     
     # train model
-    trainer = Trainer(model, args.model_type, train_dataloader, dev_dataloader, test_dataloader, num_epochs=args.num_epochs, lr=args.lr, device=args.device)
+    trainer = Trainer(model, args.model_type, train_dataloader, dev_dataloader, test_dataloader, num_epochs=args.num_epochs, lr=args.lr, device=device)
     trainer.run()
 
 
@@ -52,7 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=2, help='batch size')
     parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
     parser.add_argument('--num_epochs', type=int, default=50, help='number of epochs')
-    parser.add_argument('--device', type=str, default='cuda', help='device to use')
+    # parser.add_argument('--device', type=str, default='cuda', help='device to use')
     # parser.add_argument('--seed', type=int, default=42, help='random seed')
     args = parser.parse_args()
     
