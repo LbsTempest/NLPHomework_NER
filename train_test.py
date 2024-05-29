@@ -1,5 +1,6 @@
 import torch
 import torch.optim as optim
+from torch.nn import DataParallel
 
 
 def train_encoder_model(model, train_dataloader, dev_dataloader, criterion, optimizer, num_epochs, device):
@@ -129,6 +130,10 @@ class Trainer:
         self.lr = lr
 
     def run(self, multi_gpu: bool):
+        if multi_gpu:
+            self.model = DataParallel(self.model, device_ids=[2, 4])
+            self.model.to(self.model.device_ids[0])
+            self.device = self.model.device_ids[0]
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         if self.model_type == "encoder_only":

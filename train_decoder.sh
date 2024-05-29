@@ -4,7 +4,7 @@ python main.py \
     --n_ffn_layers 2 \
     --n_decoder_layers 4 \
     --dropout 0.2 \
-    --batch_size 16 \
+    --batch_size 64 \
     --num_epochs 50 \
     --multi_gpu true
 
