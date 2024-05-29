@@ -117,6 +117,24 @@ def evaluate_decoder_model(model, data_loader, device) -> float:
     return accuracy
 
 
+def test_encoder_model(model, dataloader, device, id2label):
+    model.eval()
+    for i, batch in enumerate(dataloader):
+        input_ids = batch["input_ids"].to(device)
+        attention_mask = batch["attention_mask"].to(device).unsqueeze(1).unsqueeze(2)
+        # labels = batch["labels"].to(device)
+        segment_embedding = batch["segment_embedding"].to(device)
+
+        outputs = model(input_ids, segment_embedding, attention_mask)
+
+        _, batch_predicted = torch.max(outputs, dim=2)
+        for j in range(batch_predicted.shape[0]):
+            predicted = batch_predicted[j][attention_mask.bool().squeeze(1).squeeze(1)[j]].cpu().numpy()
+            predicted_labels = [id2label[i] for i in predicted]
+            with open("./ner-data/dev_TAG_con.txt", "a") as f:
+                f.write(f"{' '.join(predicted_labels)}\n")
+        print(f"Batch {i + 1}/{len(dataloader)}")
+
 class Trainer:
     def __init__(self, model, model_type, train_loader, dev_loader, test_loader, 
                 device="cuda", num_epochs=50, lr=1e-5):
@@ -129,7 +147,7 @@ class Trainer:
         self.num_epochs = num_epochs
         self.lr = lr
 
-    def run(self, multi_gpu: bool):
+    def train(self, multi_gpu: bool):
         if multi_gpu:
             self.model = DataParallel(self.model, device_ids=[2, 4])
             self.model.to(self.model.device_ids[0])

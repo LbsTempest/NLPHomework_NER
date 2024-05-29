@@ -111,8 +111,15 @@ def get_train_dev_dataloader(dataset_path: str, model_type: str, max_len: int = 
     return train_data_loader, dev_data_loader, label2id, vocab
 
 
-def load_test_dataset(dataset_path: str) -> DataLoader:
-    pass
+def get_test_dataloader(text_file: str, vocab: dict, label_map: dict, max_len: int = 512, batch_size: int = 2) -> DataLoader:
+    with open(os.path.join(text_file, "test.txt"), "r", encoding="utf-8") as f:
+        texts: list[list[str]] = [line.strip().split() for line in f]
+        labels: list[list[str]] = [["O"] * len(text) for text in texts]
+
+        test_dataset = BertNERDataset(texts, labels, vocab, max_len, label_map)
+        test_data_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+        return test_data_loader
+
 
 
 if __name__ == "__main__":

@@ -2,10 +2,10 @@ import argparse
 
 import torch
 from encoder_only import SimplifiedBERT
-from decoder_only import SimplifiedGPT
+from decoder_only import Decoder
 from encoder_decoder import SimpleEncoderDecoder
-from load_dataset import get_train_dev_dataloader, load_test_dataset
-from train_test import Trainer, evaluate_encoder_model, evaluate_decoder_model
+from load_dataset import get_train_dev_dataloader, get_test_dataloader
+from train_test import Trainer, evaluate_encoder_model, evaluate_decoder_model, test_encoder_model
 
 
 def main(args) -> None:
@@ -13,7 +13,9 @@ def main(args) -> None:
     # load dataset
     train_dataloader, dev_dataloader, label2id, vocab = get_train_dev_dataloader(
         "ner-data", args.model_type, args.max_len, args.batch_size)
-    test_dataloader = load_test_dataset("ner-data")
+    test_dataloader = get_test_dataloader("ner-data", vocab, label2id)
+
+    id2label = {v: k for k, v in label2id.items()}
 
     input_dim = len(vocab)
     output_dim = len(label2id)
@@ -22,7 +24,7 @@ def main(args) -> None:
     if args.model_type == 'encoder_only':
         model = SimplifiedBERT(input_dim, args.d_model, args.n_head, args.n_ffn_layers, args.n_encoder_layers, args.max_len, output_dim, args.dropout)
     elif args.model_type == 'decoder_only':
-        model = SimplifiedGPT(input_dim, args.d_model, args.n_head, args.n_ffn_layers, args.n_decoder_layers, args.max_len, output_dim, args.dropout)
+        model = Decoder(input_dim, args.d_model, args.n_head, args.n_ffn_layers, args.n_decoder_layers, args.max_len, output_dim, args.dropout)
     elif args.model_type == 'encoder_decoder':
         model = SimpleEncoderDecoder(input_dim, args.d_model, args.n_head, args.n_ffn_layers,
                                     args.n_encoder_layers, args.n_decoder_layers, args.max_len, output_dim, args.dropout)
@@ -35,14 +37,15 @@ def main(args) -> None:
         model.load_state_dict(torch.load(args.model_path))
     
     # train model
-    trainer = Trainer(model, args.model_type, train_dataloader, dev_dataloader, test_dataloader, num_epochs=args.num_epochs, lr=args.lr, device=device)
-    trainer.run(args.multi_gpu)
-    # evaluate_decoder_model(model, dev_dataloader, device)
+    # trainer = Trainer(model, args.model_type, train_dataloader, dev_dataloader, test_dataloader, num_epochs=args.num_epochs, lr=args.lr, device=device)
+    # trainer.run(args.multi_gpu)
+    # evaluate_encoder_model(model, dev_dataloader, device)
+    test_encoder_model(model, dev_dataloader, device, id2label)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_type', type=str, default='decoder_only', help='model type: encoder_only, decoder_only, encoder_decoder')
+    parser.add_argument('--model_type', type=str, default='encoder_only', help='model type: encoder_only, decoder_only, encoder_decoder')
     parser.add_argument('--model_path', type=str, default=None, help='path to load model')
     parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
     parser.add_argument('--n_head', type=int, default=4, help='number of heads in multi-head attention')

@@ -4,11 +4,11 @@ import torch.nn as nn
 from layers import PositionalEncoding, DecoderLayer
 
 
-class SimplifiedGPT(nn.Module):
+class Decoder(nn.Module):
     def __init__(
         self, vocab_size, d_model, num_heads, d_ff, num_layers, max_len, output_dim, dropout=0.1
     ):
-        super(SimplifiedGPT, self).__init__()
+        super(Decoder, self).__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.positional_encoding = PositionalEncoding(d_model, max_len)
         self.decoder_layers = nn.ModuleList(
