@@ -12,8 +12,8 @@ def main(args) -> None:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # load dataset
     train_dataloader, dev_dataloader, label2id, vocab = get_train_dev_dataloader(
-        "./ner-data", args.model_type, args.max_len, args.batch_size)
-    test_dataloader = load_test_dataset("./ner-data")
+        "ner-data", args.model_type, args.max_len, args.batch_size)
+    test_dataloader = load_test_dataset("ner-data")
 
     input_dim = len(vocab)
     output_dim = len(label2id)
