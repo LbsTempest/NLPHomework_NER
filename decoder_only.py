@@ -28,7 +28,7 @@ class SimplifiedGPT(nn.Module):
 
         # Pass through decoder layers
         for layer in self.decoder_layers:
-            embeddings = layer(embeddings, attention_mask)
+            embeddings = layer(embeddings, embeddings, attention_mask, attention_mask)
 
         logits = self.fc(embeddings)
         return logits
