@@ -5,7 +5,7 @@ from encoder_only import SimplifiedBERT
 from decoder_only import SimplifiedGPT
 from encoder_decoder import SimpleEncoderDecoder
 from load_dataset import get_train_dev_dataloader, load_test_dataset
-from train_test import Trainer
+from train_test import Trainer, evaluate_encoder_model, evaluate_decoder_model
 
 
 def main(args) -> None:
@@ -36,14 +36,15 @@ def main(args) -> None:
     
     # train model
     trainer = Trainer(model, args.model_type, train_dataloader, dev_dataloader, test_dataloader, num_epochs=args.num_epochs, lr=args.lr, device=device)
-    trainer.run()
+    trainer.run(args.multi_gpu)
+    # evaluate_decoder_model(model, dev_dataloader, device)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_type', type=str, default='encoder_only', help='model type: encoder_only, decoder_only, encoder_decoder')
+    parser.add_argument('--model_type', type=str, default='decoder_only', help='model type: encoder_only, decoder_only, encoder_decoder')
     parser.add_argument('--model_path', type=str, default=None, help='path to load model')
-    parser.add_argument('--d_model', type=int, default=128, help='dimension of model')
+    parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
     parser.add_argument('--n_head', type=int, default=4, help='number of heads in multi-head attention')
     parser.add_argument('--n_ffn_layers', type=int, default=2, help='number of layers in FFN')
     parser.add_argument('--n_encoder_layers', type=int, default=4, help='number of layers in encoder')
@@ -53,6 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=2, help='batch size')
     parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
     parser.add_argument('--num_epochs', type=int, default=50, help='number of epochs')
+    parser.add_argument('--multi_gpu', type=bool, default=False, help='use multi-gpu training')
     # parser.add_argument('--device', type=str, default='cuda', help='device to use')
     # parser.add_argument('--seed', type=int, default=42, help='random seed')
     args = parser.parse_args()
