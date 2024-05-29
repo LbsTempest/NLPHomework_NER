@@ -1,5 +1,12 @@
-python main.py --d_model 512 --n_head 4 --n_ffn_layers 2 --n_encoder_layers 4 --dropout 0.2 --batch_size 16 --num_epochs 50 \
-            #    --model_path ./Epoch:0_best_encoder_model.pth
+python main.py \
+    --d_model 512 \
+    --n_head 4 \
+    --n_ffn_layers 2 \
+    --n_decoder_layers 4 \
+    --dropout 0.2 \
+    --batch_size 16 \
+    --num_epochs 50 \
+    --multi_gpu true
 
 # parser.add_argument('--model_type', type=str, default='encoder_only', help='model type: encoder_only, decoder_only, encoder_decoder')
 # parser.add_argument('--model_path', type=str, default=None, help='path to load model')

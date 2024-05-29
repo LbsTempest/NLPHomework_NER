@@ -25,13 +25,13 @@ def train_encoder_model(model, train_dataloader, dev_dataloader, criterion, opti
                 f.write(f"Epoch {epoch+1}/{num_epochs}, Batch {i}/{len(train_dataloader)}, Loss: {loss.item()}\n")
 
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}")
-        accuracy: float = evaluate_model(model, dev_dataloader, device)
+        accuracy: float = evaluate_encoder_model(model, dev_dataloader, device)
         if accuracy > model_accuracy:
             model_accuracy = accuracy
             torch.save(model.state_dict(), f"Epoch_{epoch}_best_encoder_model.pth")
         print(f"Best Accuracy: {model_accuracy:.4f}")
         with open("encoder_loss.txt", "a") as f:
-            f.write(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}\n")
+            f.write(f"Epoch:{epoch+1}/{num_epochs}, Loss: {loss.item()}\n")
             f.write(f"Best Accuracy: {model_accuracy:.4f}\n")
 
 
@@ -43,11 +43,10 @@ def train_decoder_model(model, train_dataloader, dev_dataloader, criterion, opti
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device).unsqueeze(1).unsqueeze(2)
             labels = batch["labels"].to(device)
-            segment_embedding = batch["segment_embedding"].to(device)
 
             optimizer.zero_grad()
 
-            outputs = model(input_ids, segment_embedding, attention_mask)
+            outputs = model(input_ids, attention_mask)
             loss = criterion(outputs.view(-1, outputs.size(-1)), labels.view(-1))
 
             loss.backward()
@@ -58,7 +57,7 @@ def train_decoder_model(model, train_dataloader, dev_dataloader, criterion, opti
                 f.write(f"Epoch:{epoch+1}/{num_epochs}, Batch {i}/{len(train_dataloader)}, Loss: {loss.item()}\n")
 
         print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}")
-        accuracy: float = evaluate_model(model, dev_dataloader, device)
+        accuracy: float = evaluate_decoder_model(model, dev_dataloader, device)
         if accuracy > model_accuracy:
             model_accuracy = accuracy
             torch.save(model.state_dict(), "best_model.pth")
@@ -66,7 +65,7 @@ def train_decoder_model(model, train_dataloader, dev_dataloader, criterion, opti
     with open("decoder_loss.txt", "a") as f:
         f.write(f"Best Accuracy: {model_accuracy:.4f}\n")
 
-def evaluate_model(model, data_loader, device) -> float:
+def evaluate_encoder_model(model, data_loader, device) -> float:
     model.eval()
     correct = 0
     total = 0
@@ -77,6 +76,31 @@ def evaluate_model(model, data_loader, device) -> float:
         segment_embedding = batch["segment_embedding"].to(device)
 
         outputs = model(input_ids, segment_embedding, attention_mask)
+
+        _, predicted = torch.max(outputs, dim=2)
+        predicted = predicted[attention_mask.bool().squeeze(1).squeeze(1)].cpu().numpy()
+        labels = labels[attention_mask.bool().squeeze(1).squeeze(1)].cpu().numpy()
+        # 计算准确率
+        correct += (predicted == labels).sum().item()
+        total += labels.shape[0]
+        print(f"Batch {i + 1}/{len(data_loader)}")
+    accuracy = correct / total
+    print(f"Accuracy: {accuracy:.4f}")
+    model.train()
+
+    return accuracy
+
+
+def evaluate_decoder_model(model, data_loader, device) -> float:
+    model.eval()
+    correct = 0
+    total = 0
+    for i, batch in enumerate(data_loader):
+        input_ids = batch["input_ids"].to(device)
+        attention_mask = batch["attention_mask"].to(device).unsqueeze(1).unsqueeze(2)
+        labels = batch["labels"].to(device)
+
+        outputs = model(input_ids, attention_mask)
 
         _, predicted = torch.max(outputs, dim=2)
         predicted = predicted[attention_mask.bool().squeeze(1).squeeze(1)].cpu().numpy()
@@ -104,7 +128,7 @@ class Trainer:
         self.num_epochs = num_epochs
         self.lr = lr
 
-    def run(self):
+    def run(self, multi_gpu: bool):
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         if self.model_type == "encoder_only":
