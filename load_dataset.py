@@ -78,10 +78,15 @@ def create_mask(src, pad_token):
 
 
 def get_train_dev_dataloader(dataset_path: str, model_type: str, max_len: int = 512, batch_size: int = 2) -> tuple[DataLoader, DataLoader, dict, dict]:
-    train_texts, labels = read_data(os.path.join(dataset_path, "train.txt"), os.path.join(dataset_path, "train_TAG.txt"))
-    dev_texts, _ = read_data(os.path.join(dataset_path, "dev.txt"), os.path.join(dataset_path, "dev_TAG.txt"))
+    train_texts, train_labels = read_data(os.path.join(dataset_path, "train.txt"), os.path.join(dataset_path, "train_TAG.txt"))
+    dev_texts, dev_labels = read_data(os.path.join(dataset_path, "dev.txt"), os.path.join(dataset_path, "dev_TAG.txt"))
 
-    unique_labels = set(label for doc in labels for label in doc)
+    unique_labels = {}
+    for label_list in train_labels + dev_labels:
+        for label in label_list:
+            if label not in unique_labels:
+                unique_labels[label] = True
+
     label2id = {label: idx for idx, label in enumerate(unique_labels)}
     # id2label = {idx: label for label, idx in label2id.items()}
 
@@ -94,11 +99,11 @@ def get_train_dev_dataloader(dataset_path: str, model_type: str, max_len: int = 
     print(f"Vocab size: {len(vocab)}")
 
     if model_type == "encoder_only":
-        train_dataset = BertNERDataset(train_texts, labels, vocab, max_len, label2id)
-        dev_dataset = BertNERDataset(dev_texts, labels, vocab, max_len, label2id)
+        train_dataset = BertNERDataset(train_texts, train_labels, vocab, max_len, label2id)
+        dev_dataset = BertNERDataset(dev_texts, dev_labels, vocab, max_len, label2id)
     elif model_type == "decoder_only":
-        train_dataset = BertNERDataset(train_texts, labels, vocab, max_len, label2id)
-        dev_dataset = BertNERDataset(dev_texts, labels, vocab, max_len, label2id)
+        train_dataset = BertNERDataset(train_texts, train_labels, vocab, max_len, label2id)
+        dev_dataset = BertNERDataset(dev_texts, dev_labels, vocab, max_len, label2id)
 
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     dev_data_loader = DataLoader(dev_dataset, batch_size=batch_size, shuffle=False)
