@@ -5,6 +5,19 @@ from layers import PositionalEncoding, EncoderLayer
 
 
 class SimplifiedBERT(nn.Module):
+    """
+    Simplified BERT model for sequence labeling tasks.
+
+    Args:
+        vocab_size (int): Size of the vocabulary.
+        d_model (int): Dimension of the model.
+        num_heads (int): Number of attention heads.
+        d_ff (int): Dimension of the feed-forward network.
+        num_layers (int): Number of encoder layers.
+        max_len (int): Maximum length of input sequences.
+        num_labels (int): Number of output labels.
+        dropout (float): Dropout rate. Default is 0.1.
+    """
     def __init__(
         self,
         vocab_size,
@@ -27,7 +40,17 @@ class SimplifiedBERT(nn.Module):
         self.fc = nn.Linear(d_model, num_labels)
 
     def forward(self, input_ids, segment_ids, attention_mask):
-        # Compute token, segment, and position embeddings
+        """
+        Forward pass for the SimplifiedBERT model.
+
+        Args:
+            input_ids (torch.Tensor): Tensor containing input token IDs.
+            segment_ids (torch.Tensor): Tensor containing segment IDs.
+            attention_mask (torch.Tensor): Attention mask tensor.
+
+        Returns:
+            torch.Tensor: Logits for each token in the input sequence.
+        """
         token_embeddings = self.embedding(input_ids)
         segment_embeddings = self.segment_embedding(segment_ids)
         position_embeddings = self.positional_encoding(token_embeddings)
@@ -42,95 +65,3 @@ class SimplifiedBERT(nn.Module):
 
         logits = self.fc(embeddings)
         return logits
-
-
-# class PositionalEncoding(nn.Module):
-#     def __init__(self, d_model, max_len=512):
-#         super(PositionalEncoding, self).__init__()
-#         pe = torch.zeros(max_len, d_model)
-#         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-#         div_term = torch.exp(
-#             torch.arange(0, d_model, 2).float()
-#             * (-torch.log(torch.tensor(10000.0)) / d_model)
-#         )
-#         pe[:, 0::2] = torch.sin(position * div_term)
-#         pe[:, 1::2] = torch.cos(position * div_term)
-#         pe = pe.unsqueeze(0).transpose(0, 1)
-#         self.register_buffer("pe", pe)
-
-#     def forward(self, x):
-#         return x + self.pe[: x.size(0), :]
-
-
-# class MultiHeadAttention(nn.Module):
-#     def __init__(self, d_model, num_heads):
-#         super(MultiHeadAttention, self).__init__()
-#         assert d_model % num_heads == 0
-#         self.d_k = d_model // num_heads
-#         self.num_heads = num_heads
-
-#         self.linear_q = nn.Linear(d_model, d_model)
-#         self.linear_k = nn.Linear(d_model, d_model)
-#         self.linear_v = nn.Linear(d_model, d_model)
-#         self.linear_out = nn.Linear(d_model, d_model)
-
-#         self.attn_dropout = nn.Dropout(p=0.1)
-
-#     def forward(self, query, key, value, mask=None):
-#         batch_size = query.size(0)
-
-#         query = (
-#             self.linear_q(query)
-#             .view(batch_size, -1, self.num_heads, self.d_k)
-#             .transpose(1, 2)
-#         )
-#         key = (
-#             self.linear_k(key)
-#             .view(batch_size, -1, self.num_heads, self.d_k)
-#             .transpose(1, 2)
-#         )
-#         value = (
-#             self.linear_v(value)
-#             .view(batch_size, -1, self.num_heads, self.d_k)
-#             .transpose(1, 2)
-#         )
-
-#         scores = torch.matmul(query, key.transpose(-2, -1)) / torch.sqrt(
-#             torch.tensor(self.d_k).float()
-#         )
-#         if mask is not None:
-#             scores = scores.masked_fill(mask == 0, -1e9)
-#         attn = torch.softmax(scores, dim=-1)
-#         attn = self.attn_dropout(attn)
-#         output = torch.matmul(attn, value)
-
-#         output = (
-#             output.transpose(1, 2)
-#             .contiguous()
-#             .view(batch_size, -1, self.num_heads * self.d_k)
-#         )
-#         output = self.linear_out(output)
-#         return output
-
-
-# class EncoderLayer(nn.Module):
-#     def __init__(self, d_model, num_heads, d_ff, dropout):
-#         super(EncoderLayer, self).__init__()
-#         self.self_attn = MultiHeadAttention(d_model, num_heads)
-#         self.ffn = nn.Sequential(
-#             nn.Linear(d_model, d_ff), nn.ReLU(), nn.Linear(d_ff, d_model)
-#         )
-#         self.layernorm1 = nn.LayerNorm(d_model)
-#         self.layernorm2 = nn.LayerNorm(d_model)
-#         self.dropout1 = nn.Dropout(dropout)
-#         self.dropout2 = nn.Dropout(dropout)
-
-#     def forward(self, src, mask):
-#         src2 = self.self_attn(src, src, src, mask)
-#         src = src + self.dropout1(src2)
-#         src = self.layernorm1(src)
-
-#         src2 = self.ffn(src)
-#         src = src + self.dropout2(src2)
-#         src = self.layernorm2(src)
-#         return src

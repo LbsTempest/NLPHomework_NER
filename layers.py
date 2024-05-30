@@ -3,6 +3,13 @@ from torch import nn
 
 
 class PositionalEncoding(nn.Module):
+    """
+    Implements the positional encoding for the input sequences.
+
+    Args:
+        d_model (int): The dimension of the model.
+        max_len (int): The maximum length of the input sequences. Default is 512.
+    """
     def __init__(self, d_model, max_len=512):
         super(PositionalEncoding, self).__init__()
         pe = torch.zeros(max_len, d_model)
@@ -17,10 +24,26 @@ class PositionalEncoding(nn.Module):
         self.register_buffer("pe", pe)
 
     def forward(self, x):
+        """
+        Forward pass for the positional encoding.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The input tensor with positional encodings added.
+        """
         return x + self.pe[: x.size(0), :]
 
 
 class MultiHeadAttention(nn.Module):
+    """
+    Implements the multi-head attention mechanism.
+
+    Args:
+        d_model (int): The dimension of the model.
+        num_heads (int): The number of attention heads.
+    """
     def __init__(self, d_model, num_heads):
         super(MultiHeadAttention, self).__init__()
         assert d_model % num_heads == 0
@@ -35,6 +58,18 @@ class MultiHeadAttention(nn.Module):
         self.attn_dropout = nn.Dropout(p=0.1)
 
     def forward(self, query, key, value, mask=None):
+        """
+        Forward pass for the multi-head attention.
+
+        Args:
+            query (torch.Tensor): Query tensor.
+            key (torch.Tensor): Key tensor.
+            value (torch.Tensor): Value tensor.
+            mask (torch.Tensor, optional): Attention mask.
+
+        Returns:
+            torch.Tensor: Output of the attention mechanism.
+        """
         batch_size = query.size(0)
 
         query = (
@@ -72,6 +107,15 @@ class MultiHeadAttention(nn.Module):
 
 
 class EncoderLayer(nn.Module):
+    """
+    Implements a single layer of the encoder.
+
+    Args:
+        d_model (int): The dimension of the model.
+        num_heads (int): The number of attention heads.
+        d_ff (int): The dimension of the feed-forward network.
+        dropout (float): The dropout rate.
+    """
     def __init__(self, d_model, num_heads, d_ff, dropout):
         super(EncoderLayer, self).__init__()
         self.self_attn = MultiHeadAttention(d_model, num_heads)
@@ -84,6 +128,16 @@ class EncoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
 
     def forward(self, src, mask):
+        """
+        Forward pass for the encoder layer.
+
+        Args:
+            src (torch.Tensor): The input tensor.
+            mask (torch.Tensor): The attention mask.
+
+        Returns:
+            torch.Tensor: The output tensor.
+        """
         src2 = self.self_attn(src, src, src, mask)
         src = src + self.dropout1(src2)
         src = self.layernorm1(src)
@@ -95,6 +149,15 @@ class EncoderLayer(nn.Module):
 
 
 class DecoderLayer(nn.Module):
+    """
+    Implements a single layer of the decoder.
+
+    Args:
+        d_model (int): The dimension of the model.
+        num_heads (int): The number of attention heads.
+        d_ff (int): The dimension of the feed-forward network.
+        dropout (float): The dropout rate.
+    """
     def __init__(self, d_model, num_heads, d_ff, dropout):
         super(DecoderLayer, self).__init__()
         self.self_attn = MultiHeadAttention(d_model, num_heads)
@@ -110,6 +173,18 @@ class DecoderLayer(nn.Module):
         self.dropout3 = nn.Dropout(dropout)
 
     def forward(self, tgt, enc_output, src_mask, tgt_mask):
+        """
+        Forward pass for the decoder layer.
+
+        Args:
+            tgt (torch.Tensor): The target tensor.
+            enc_output (torch.Tensor): The output from the encoder.
+            src_mask (torch.Tensor): The source mask.
+            tgt_mask (torch.Tensor): The target mask.
+
+        Returns:
+            torch.Tensor: The output tensor.
+        """
         tgt2 = self.self_attn(tgt, tgt, tgt, tgt_mask)
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.layernorm1(tgt)
@@ -125,6 +200,18 @@ class DecoderLayer(nn.Module):
 
 
 class Encoder(nn.Module):
+    """
+    Implements the encoder consisting of multiple encoder layers.
+
+    Args:
+        vocab_size (int): The size of the vocabulary.
+        d_model (int): The dimension of the model.
+        num_heads (int): The number of attention heads.
+        d_ff (int): The dimension of the feed-forward network.
+        num_layers (int): The number of encoder layers.
+        max_len (int): The maximum length of the input sequences.
+        dropout (float): The dropout rate.
+    """
     def __init__(
         self, vocab_size, d_model, num_heads, d_ff, num_layers, max_len, dropout
     ):
@@ -137,6 +224,16 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, src, mask):
+        """
+        Forward pass for the encoder.
+
+        Args:
+            src (torch.Tensor): The input tensor.
+            mask (torch.Tensor): The attention mask.
+
+        Returns:
+            torch.Tensor: The output tensor from the encoder.
+        """
         src = self.embedding(src) * torch.sqrt(torch.tensor(src.size(-1)).float())
         src = self.positional_encoding(src)
         src = self.dropout(src)
@@ -146,6 +243,18 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
+    """
+    Implements the decoder consisting of multiple decoder layers.
+
+    Args:
+        vocab_size (int): The size of the vocabulary.
+        d_model (int): The dimension of the model.
+        num_heads (int): The number of attention heads.
+        d_ff (int): The dimension of the feed-forward network.
+        num_layers (int): The number of decoder layers.
+        max_len (int): The maximum length of the input sequences.
+        dropout (float): The dropout rate.
+    """
     def __init__(
         self, vocab_size, d_model, num_heads, d_ff, num_layers, max_len, dropout
     ):
@@ -158,6 +267,18 @@ class Decoder(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, tgt, enc_output, src_mask, tgt_mask):
+        """
+        Forward pass for the decoder.
+
+        Args:
+            tgt (torch.Tensor): The target tensor.
+            enc_output (torch.Tensor): The output from the encoder.
+            src_mask (torch.Tensor): The source mask.
+            tgt_mask (torch.Tensor): The target mask.
+
+        Returns:
+            torch.Tensor: The output tensor from the decoder.
+        """
         tgt = self.embedding(tgt) * torch.sqrt(torch.tensor(tgt.size(-1)).float())
         tgt = self.positional_encoding(tgt)
         tgt = self.dropout(tgt)

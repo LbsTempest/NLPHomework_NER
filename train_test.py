@@ -4,6 +4,21 @@ from torch.nn import DataParallel
 
 
 def train_encoder_model(model, train_dataloader, dev_dataloader, criterion, optimizer, num_epochs, device):
+    """
+    Train an encoder-only model.
+
+    Args:
+        model (torch.nn.Module): The encoder model to be trained.
+        train_dataloader (DataLoader): Dataloader for the training dataset.
+        dev_dataloader (DataLoader): Dataloader for the development/validation dataset.
+        criterion (torch.nn.Module): Loss function.
+        optimizer (torch.optim.Optimizer): Optimizer for training.
+        num_epochs (int): Number of epochs to train the model.
+        device (torch.device): Device to run the model on (e.g., "cuda" or "cpu").
+
+    Returns:
+        None
+    """
     model.train()
     model_accuracy: float = 0.0
     for epoch in range(num_epochs):
@@ -37,6 +52,21 @@ def train_encoder_model(model, train_dataloader, dev_dataloader, criterion, opti
 
 
 def train_decoder_model(model, train_dataloader, dev_dataloader, criterion, optimizer, num_epochs, device):
+    """
+    Train a decoder-only model.
+
+    Args:
+        model (torch.nn.Module): The decoder model to be trained.
+        train_dataloader (DataLoader): Dataloader for the training dataset.
+        dev_dataloader (DataLoader): Dataloader for the development/validation dataset.
+        criterion (torch.nn.Module): Loss function.
+        optimizer (torch.optim.Optimizer): Optimizer for training.
+        num_epochs (int): Number of epochs to train the model.
+        device (torch.device): Device to run the model on (e.g., "cuda" or "cpu").
+
+    Returns:
+        None
+    """
     model.train()
     model_accuracy: float = 0.0
     for epoch in range(num_epochs):
@@ -67,6 +97,17 @@ def train_decoder_model(model, train_dataloader, dev_dataloader, criterion, opti
         f.write(f"Best Accuracy: {model_accuracy:.4f}\n")
 
 def evaluate_encoder_model(model, data_loader, device) -> float:
+    """
+    Evaluate the performance of an encoder model.
+
+    Args:
+        model (torch.nn.Module): The encoder model to be evaluated.
+        data_loader (DataLoader): Dataloader for the evaluation dataset.
+        device (torch.device): Device to run the model on (e.g., "cuda" or "cpu").
+
+    Returns:
+        float: The accuracy of the model on the evaluation dataset.
+    """
     model.eval()
     correct = 0
     total = 0
@@ -93,6 +134,17 @@ def evaluate_encoder_model(model, data_loader, device) -> float:
 
 
 def evaluate_decoder_model(model, data_loader, device) -> float:
+    """
+    Evaluate the performance of a decoder model.
+
+    Args:
+        model (torch.nn.Module): The decoder model to be evaluated.
+        data_loader (DataLoader): Dataloader for the evaluation dataset.
+        device (torch.device): Device to run the model on (e.g., "cuda" or "cpu").
+
+    Returns:
+        float: The accuracy of the model on the evaluation dataset.
+    """
     model.eval()
     correct = 0
     total = 0
@@ -118,6 +170,18 @@ def evaluate_decoder_model(model, data_loader, device) -> float:
 
 
 def test_encoder_model(model, dataloader, device, id2label):
+    """
+    Test the encoder model and save the predicted labels.
+
+    Args:
+        model (torch.nn.Module): The encoder model to be tested.
+        dataloader (DataLoader): Dataloader for the test dataset.
+        device (torch.device): Device to run the model on (e.g., "cuda" or "cpu").
+        id2label (dict): Dictionary mapping label IDs to label names.
+
+    Returns:
+        None
+    """
     model.eval()
     for i, batch in enumerate(dataloader):
         input_ids = batch["input_ids"].to(device)
@@ -136,6 +200,19 @@ def test_encoder_model(model, dataloader, device, id2label):
         print(f"Batch {i + 1}/{len(dataloader)}")
 
 class Trainer:
+    """
+    Trainer class to manage training, validation, and testing of models.
+
+    Args:
+        model (torch.nn.Module): The model to be trained.
+        model_type (str): The type of model ("encoder_only" or "decoder_only").
+        train_loader (DataLoader): Dataloader for the training dataset.
+        dev_loader (DataLoader): Dataloader for the development/validation dataset.
+        test_loader (DataLoader): Dataloader for the test dataset.
+        device (str): Device to run the model on (e.g., "cuda" or "cpu").
+        num_epochs (int): Number of epochs to train the model.
+        lr (float): Learning rate for the optimizer.
+    """
     def __init__(self, model, model_type, train_loader, dev_loader, test_loader, 
                 device="cuda", num_epochs=50, lr=1e-5):
         self.model = model
@@ -148,6 +225,15 @@ class Trainer:
         self.lr = lr
 
     def train(self, multi_gpu: bool):
+        """
+        Train the model.
+
+        Args:
+            multi_gpu (bool): Whether to use multiple GPUs for training.
+
+        Returns:
+            None
+        """
         if multi_gpu:
             self.model = DataParallel(self.model, device_ids=[2, 4])
             self.model.to(self.model.device_ids[0])
